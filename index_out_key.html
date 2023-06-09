@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Chat</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <!-- ヘッダー -->
+    <header class="site-header">
+      <div class="site-logo">
+        <img class="brand" src="img/remotework_desk.png" height="200px" />
+      </div>
+      <div class="site-title">
+        <h1>Let's Chat!</h1>
+      </div>
+    </header>
+    <!-- ヘッダー -->
+
+    <!-- コンテンツ表示画面 -->    
+    <form id="contact">
+      <div class="container">
+        <div class="head">
+          <h2>今日は何食べた？</h2>
+        </div>
+        <input type="text" name="name" placeholder="Name" id="uname" /><br />
+        <textarea
+          type="text"
+          name="message"
+          placeholder="Message"
+          id="text"
+          cols="30"
+          rows="10"
+        ></textarea
+        ><br />
+        <button id="send">Send!</button>
+      </div>
+      <div id="output"></div>
+      <!-- インラインでCSS追加、高さを固定 -->
+      <!-- style="overflow: auto; height: 500px" -->
+    </form>
+    <!--/ コンテンツ表示画面 -->
+
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- JQuery -->
+
+    <!-- 以下Firebase -->
+    <!-- https://firebase.google.com/docs/database/web/start?hl=ja コードを追加してライブラリで読み込むけど宣言したものしか使えなくなる -->
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        set,
+        onChildAdded,
+        remove,
+        onChildRemoved,
+      } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "******************",
+        authDomain: "******************",
+        databaseURL: "******************",
+        projectId: "******************",
+        storageBucket: "******************",
+        messagingSenderId: "******************",
+        appId: "******************",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig); // 接続
+      const db = getDatabase(app); // FirebaseのRealtimeDatabaseに接続
+      const dbRef = ref(db, "chat");
+
+      //データ登録(Click)  $=jQuery
+      $("#send").on("click", function(){
+        const msg = {
+        uname: $("#uname").val(),
+        text: $("#text").val(),
+      }
+        // alert(uname + text); // 取得確認
+        const newPostRef = push(dbRef); //ユニークKEYを生成
+        set(newPostRef, msg); //"chat"にユニークKEYをつけてオブジェクトデータを登録
+      });
+
+      //データ登録(Enter)
+      $("#text").on("keydown", function (e) {
+        console.log(e);
+        if (e.keyCode == 13) {
+          //EnterKey=13
+          const msg = {
+            uname: $("#uname").val(), // 文字を空っぽにする「""でからっぽにできる」
+            text: $("#text").val(),
+          };
+          const newPostRef = push(dbRef); //ユニークKEY
+          set(newPostRef, msg); //"chat"にユニークKEYをつけてオブジェクトデータを登録
+        }
+      });
+
+      //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+      onChildAdded(dbRef, function (data) {
+        const msg = data.val(); //オブジェクトデータを取得し、変数msgに代入
+        const key = data.key; //データのユニークキー（削除や更新）
+
+        //表示用テキスト・HTMLを作成
+        let h = `
+        <div class="chat_messages">
+          <p>${msg.uname}：${msg.text}</p>
+        </div>
+        `;
+
+        // 画像に表示する[jQueryの操作]をする
+        $("#output").append(h);
+      });
+    </script>
+</div>
+</body>
+</html>
